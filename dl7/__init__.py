@@ -1,75 +1,65 @@
-class Log(object):
-    pass
-
-class Diver(object):
-    pass
-
-class Dive(object):
-    pass
-
-class DiveDetail(object):
-    pass
+from divelog import *
 
 def parse_file_header(log, line):
-    log.encodingCharacters = line[0]
-    log.sendingApplication = line[1]
-    log.messageType = line[2]
-    log.creationDateTime = line[3]
-    log.dives = []
+    log.metadata['source_format'] = 'DL7'
+    log.metadata['encoding_characters'] = line[0]
+    log.metadata['sending_application'] = line[1]
+    log.metadata['message_type'] = line[2]
+    log.created = line[3]
 
 def parse_record_header(log, line):
-    log.recordEncodingCharacters = line[0]
-    log.recordingComputer = line[1]
-    log.recordingComputerSerial = line[2]
-    log.depthPressureUnit = line[3]
-    log.altitudeUnit = line[4]
-    log.temperatureUnit = line[5]
-    log.tankPressureUnit = line[6]
-    log.tankVolumeUnit = line[7]
+    log.metadata['record_encoding_characters'] = line[0]
+    log.computer_model = line[1]
+    log.computer_serial = line[2]
+    log.depth_pressure_unit = line[3]
+    log.altitude_unit = line[4]
+    log.temperature_unit = line[5]
+    log.tank_pressure_unit = line[6]
+    log.tank_volume_unit = line[7]
 
 def parse_dive_header(log, line):
     dive = Dive()
     dive.record = []
     log.dives.append(dive)
-    dive.exportSequence = line[0]
-    dive.internalSequence = line[1]
-    dive.recordType = line[2]
-    dive.recordingInterval = line[3]
-    dive.leaveSurfaceTime = line[4]
-    dive.airTemperature = line[5]
-    dive.tankVolume = line[6]
-    dive.o2Mode = line[7]
-    dive.rebreatherDiluentGas = line[8]
-    dive.Altitude = line[9]
+    dive.metadata['export_sequence'] = line[0]
+    dive.sequence_number = line[1]
+    dive.metadata['record_type'] = line[2]
+    dive.recording_interval = line[3]
+    dive.leave_surface_time = line[4]
+    dive.air_temperature = line[5]
+    dive.tank_volume = line[6]
+    dive.O2_mode = line[7]
+    dive.rebreather_diluent_gas = line[8]
+    dive.altitude = line[9]
 
 def parse_dive_profile(log, line):
     dive = log.dives[len(log.dives)-1]
     detail = DiveDetail()
     dive.record.append(detail)
-    detail.time = line[0]
+    detail.elapsed_time = line[0]
     detail.depth = line[1]
-    detail.gasSwitch = line[2]
-    detail.currentPO2 = line[3]
-    detail.ascentRateViolation = line[4]
-    detail.decompressionViolation = line[5]
-    detail.currentCeiling = line[6]
-    detail.currentWaterTemperature = line[7]
-    detail.warningNumber = line[8]
-    detail.mainCylinderPressure = line[9]
-    detail.diluentCylinderPressure = line[10]
-    detail.oxygenFlowRate = line[11]
-    detail.CNSToxicity = line[12]
+    detail.gas_switch = line[2]
+    detail.current_PO2 = line[3]
+    detail.ascent_rate_violation = line[4]
+    detail.decompression_violation = line[5]
+    detail.current_ceiling = line[6]
+    detail.water_temperature = line[7]
+    detail.warning_number = line[8]
+    detail.main_cylinder_pressure = line[9]
+    detail.diluent_cylinder_pressure = line[10]
+    detail.oxygen_flow_rate = line[11]
+    detail.CNS_toxicity = line[12]
     detail.OUT = line[13]
-    detail.ascentRate = line[14]
+    detail.ascent_rate = line[14]
 
 def parse_dive_trailer(log, line):
     dive = log.dives[len(log.dives)-1]
     # export sequence
     # internal sequence
-    dive.maximumDepth = line[2]
-    dive.reachSurfaceTime = line[3]
-    dive.minimumWaterTemperature = line[4]
-    dive.pressureDrop = line[5]
+    dive.max_depth = line[2]
+    dive.reach_surface_time = line[3]
+    dive.min_water_temperature = line[4]
+    dive.pressure_drop = line[5]
 
 def parse_dive_profile_start(log, line):
     parsers[''] = parse_dive_profile
