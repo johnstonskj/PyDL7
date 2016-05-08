@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='PyDL7',
-    version='0.0.2',
+    version='0.0.3',
     description='Python API for parsing DAN Dive Log files.',
     author='Simon Johnston',
     author_email='johnstonskj@gmail.com',
