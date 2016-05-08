@@ -1,6 +1,10 @@
 from divelog import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 def parse_file_header(log, line):
+    logger.debug('parsing file header metadata')
     log.metadata['source_format'] = 'DL7'
     log.metadata['encoding_characters'] = line[0]
     log.metadata['sending_application'] = line[1]
@@ -8,6 +12,7 @@ def parse_file_header(log, line):
     log.created = line[3]
 
 def parse_record_header(log, line):
+    logger.debug('parsing record header')
     log.metadata['record_encoding_characters'] = line[0]
     log.computer_model = line[1]
     log.computer_serial = line[2]
@@ -18,6 +23,7 @@ def parse_record_header(log, line):
     log.tank_volume_unit = line[7]
 
 def parse_dive_header(log, line):
+    logger.debug('parsing dive header')
     dive = Dive()
     dive.record = []
     log.dives.append(dive)
@@ -33,6 +39,7 @@ def parse_dive_header(log, line):
     dive.altitude = line[9]
 
 def parse_dive_profile(log, line):
+    logger.debug('parsing dive profile data')
     dive = log.dives[len(log.dives)-1]
     detail = DiveDetail()
     dive.record.append(detail)
@@ -53,6 +60,7 @@ def parse_dive_profile(log, line):
     detail.ascent_rate = line[14]
 
 def parse_dive_trailer(log, line):
+    logger.debug('parsing dive trailer')
     dive = log.dives[len(log.dives)-1]
     # export sequence
     # internal sequence
@@ -88,10 +96,11 @@ def parseline(log, line):
     line_type = fields[0]
     if line_type in parsers:
         parsers[line_type](log, fields[1:])
-#    else:
-#        print(line)
+    else:
+        logger.warn('invalid input: %s' % line)
 
 def parse(file):
+    logger.info('parsing DL7 dive log data')
     log = Log()
     content = file.readline()
     while not content == '':

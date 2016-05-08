@@ -6,6 +6,7 @@ setup(
     description='Python API for parsing DAN Dive Log files.',
     author='Simon Johnston',
     author_email='johnstonskj@gmail.com',
+    download_url='https://pypi.python.org/pypi/PyDL7',
     url='https://github.com/johnstonskj/PyDL7',
     license='MIT',
     classifiers=[
