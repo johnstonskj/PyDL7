@@ -77,13 +77,13 @@ def __parse_dive_trailer(log, line):
     dive.pressure_drop = line[5]
 
 def __parse_dive_profile_start(log, line):
-    parsers[''] = parse_dive_profile
+    __parsers[''] = __parse_dive_profile
 
 def __parse_dive_profile_end(log, line):
-    parsers[''] = parse_none
+    __parsers[''] = __parse_none
 
 def __parse_none(log, line):
-    print(line)
+    logger.debug('ignoring: %s' % line)
 
 __parsers = { # ZXU - Dive Profile
     'FSH': __parse_file_header,
@@ -101,7 +101,7 @@ __parsers = { # ZXU - Dive Profile
 def __parse_line(log, line):
     fields = line.strip().split('|')
     line_type = fields[0]
-    if line_type in parsers:
+    if line_type in __parsers:
         __parsers[line_type](log, fields[1:])
     else:
         logger.warn('invalid input: %s' % line)
