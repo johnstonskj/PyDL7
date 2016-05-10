@@ -1,4 +1,11 @@
+"""
+This module only contains the classes used to store parsed dive log data.
+"""
+
 class Log(object):
+    """
+    The Log class is the top-level object for parsed data.
+    """
     def __init__(self):
         self.metadata = {}
         self.created = 0

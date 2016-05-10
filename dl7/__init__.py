@@ -1,9 +1,16 @@
+"""
+This module implements a format handler for DAN DL7 files. These are line
+oriented, character separated, and poorly documented. This parser doesn't 
+handle all possible record types at this time.
+"""
 from divelog import *
 import logging
 
+FORMAT_NAME = 'DL7'
+
 logger = logging.getLogger(__name__)
 
-def parse_file_header(log, line):
+def __parse_file_header(log, line):
     logger.debug('parsing file header metadata')
     log.metadata['source_format'] = 'DL7'
     log.metadata['encoding_characters'] = line[0]
@@ -11,7 +18,7 @@ def parse_file_header(log, line):
     log.metadata['message_type'] = line[2]
     log.created = line[3]
 
-def parse_record_header(log, line):
+def __parse_record_header(log, line):
     logger.debug('parsing record header')
     log.metadata['record_encoding_characters'] = line[0]
     log.computer_model = line[1]
@@ -22,7 +29,7 @@ def parse_record_header(log, line):
     log.tank_pressure_unit = line[6]
     log.tank_volume_unit = line[7]
 
-def parse_dive_header(log, line):
+def __parse_dive_header(log, line):
     logger.debug('parsing dive header')
     dive = Dive()
     dive.record = []
@@ -38,7 +45,7 @@ def parse_dive_header(log, line):
     dive.rebreather_diluent_gas = line[8]
     dive.altitude = line[9]
 
-def parse_dive_profile(log, line):
+def __parse_dive_profile(log, line):
     logger.debug('parsing dive profile data')
     dive = log.dives[len(log.dives)-1]
     detail = DiveDetail()
@@ -59,7 +66,7 @@ def parse_dive_profile(log, line):
     detail.OUT = line[13]
     detail.ascent_rate = line[14]
 
-def parse_dive_trailer(log, line):
+def __parse_dive_trailer(log, line):
     logger.debug('parsing dive trailer')
     dive = log.dives[len(log.dives)-1]
     # export sequence
@@ -69,45 +76,52 @@ def parse_dive_trailer(log, line):
     dive.min_water_temperature = line[4]
     dive.pressure_drop = line[5]
 
-def parse_dive_profile_start(log, line):
+def __parse_dive_profile_start(log, line):
     parsers[''] = parse_dive_profile
 
-def parse_dive_profile_end(log, line):
+def __parse_dive_profile_end(log, line):
     parsers[''] = parse_none
 
-def parse_none(log, line):
+def __parse_none(log, line):
     print(line)
 
-parsers = { # ZXU - Dive Profile
-    'FSH': parse_file_header,
-    'ZAR': parse_none, # application reserved ZAR{...}
-    'ZRH': parse_record_header,
-    'ZAR': parse_none,
-    'ZDH': parse_dive_header,
-    'ZDP': parse_dive_profile,
-    'ZDP{': parse_dive_profile_start,
-    'ZDP}': parse_dive_profile_end,
-    'ZDT': parse_dive_trailer,
-    '': parse_none
+__parsers = { # ZXU - Dive Profile
+    'FSH': __parse_file_header,
+    'ZAR': __parse_none, # application reserved ZAR{...}
+    'ZRH': __parse_record_header,
+    'ZAR': __parse_none,
+    'ZDH': __parse_dive_header,
+    'ZDP': __parse_dive_profile,
+    'ZDP{': __parse_dive_profile_start,
+    'ZDP}': __parse_dive_profile_end,
+    'ZDT': __parse_dive_trailer,
+    '': __parse_none
 }
 
-def parseline(log, line):
+def __parse_line(log, line):
     fields = line.strip().split('|')
     line_type = fields[0]
     if line_type in parsers:
-        parsers[line_type](log, fields[1:])
+        __parsers[line_type](log, fields[1:])
     else:
         logger.warn('invalid input: %s' % line)
 
 def parse(file):
+    """
+    Parse this file object and return either a new top-level Log
+    object, or None.
+    """
     logger.info('parsing DL7 dive log data')
     log = Log()
     content = file.readline()
     while not content == '':
-        parseline(log, content)
+        __parse_line(log, content)
         content = file.readline()
     return log
 
 
 def dump(log, file):
+    """
+    Serialize the log to the provided file object.
+    """
     pass

@@ -1,3 +1,7 @@
+"""
+This is only intended for the generation of a command-line tool, it isn't expected to 
+be used as a module.
+"""
 import argparse, logging, sys
 import divelog.files
 
