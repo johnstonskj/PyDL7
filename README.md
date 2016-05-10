@@ -26,3 +26,14 @@ the function will return None.
 The dump function will take a top-level Log object, and a file-like object 
 and serialize the log to the file stream. This function does not close the
 file object.
+
+The divelog.files module helps to determine which of these formatting modules
+to use for different file types. It contains a dictionary that maps from 
+format names to the formatting module, and from known file extensions to the
+file types. To aid in determining the correct formatting module for a file 
+name the following function takes a file name and returns either the formatter
+module, or None.
+
+```python
+def get_module(filename) --> formatter module
+```
