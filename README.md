@@ -1,6 +1,8 @@
 # PyDL7
 Python API for parsing Dive Log files, primarily DAN DL7 format.
 
+![Travis Status](https://travis-ci.org/johnstonskj/PyDL7.svg)
+
 This package consists of a number of modules:
 
 ```
