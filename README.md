@@ -39,3 +39,10 @@ module, or None.
 ```python
 def get_module(filename) --> formatter module
 ```
+
+## Repositories
+
+
+(Github code repository)[https://github.com/johnstonskj/PyDL7]
+(Travis build system)[https://travis-ci.org/johnstonskj/PyDL7]
+(Python Cheeseshop distribution)[https://pypi.python.org/pypi/PyDL7]
