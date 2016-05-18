@@ -3,22 +3,25 @@ Python API for parsing Dive Log files, primarily DAN DL7 format.
 
 ![Travis Status](https://travis-ci.org/johnstonskj/PyDL7.svg)
 
-This package consists of a number of modules:
+This package consists of a number of modules, note that either read or write
+in parenthesis implies not yet implemented:
 
 ```
-,-- divelog     --> the DiveLog classes
-|   '-- files   --> file formats and extensions
-|-- dl7         --> read/write DAN DL7 files
-'-- dlson       --> read/write JSON files
+-- divelog     --> the DiveLog classes
+   |-- files   --> file formats and extensions
+   |-- dl7     --> read/(write) DAN DL7 files
+   |-- json    --> (read)/write custom JSON files
+   |-- html    --> write simple HTML file
+   '-- uddf    --> (read)/(write) UDDF files
 ```
 
-The modules that read files, dl7, and dljson, both export functions of
-the following form:
+The modules that read and write files all export functions of the following 
+form:
 
 ```python
-def parse(file) --> divelog.Log
+def parse(file) : Log
 
-def dump(log, file)
+def dump(log : Log, file)
 ```
 
 The `parse` function will return either a top-level `Log` object that contains
@@ -37,7 +40,7 @@ name the following function takes a file name and returns either the formatter
 module, or `None`.
 
 ```python
-def get_module(filename) --> formatter module
+def get_module(filename) : formatter module
 ```
 
 ## Command Line Tool
