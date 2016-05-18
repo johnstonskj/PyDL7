@@ -7,8 +7,10 @@ import divelog
 
 FORMAT_NAME = 'HTML'
 
+
 def parse(file):
     raise NotImplementedError()
+
 
 def dump(log, file):
     """
@@ -60,11 +62,13 @@ def dump(log, file):
         file.write('</div>')
         file.write('<div>')
         file.write('<label>Min Water Temperature</label')
-        file.write('<span>%s %s</span>' % (dive.min_water_temperature, log.temperature_unit))
+        file.write('<span>%s %s</span>' %
+                   (dive.min_water_temperature, log.temperature_unit))
         file.write('</div>')
         file.write('<div>')
         file.write('<label>Recording Interval</label')
-        file.write('<span>%s</span>' % divelog.format_recording_interval(dive.recording_interval))
+        file.write('<span>%s</span>' %
+                   divelog.format_recording_interval(dive.recording_interval))
         file.write('</div>')
 
         file.write('<div class="dl.divedetail">')
@@ -82,7 +86,8 @@ def dump(log, file):
             file.write('<tr>')
             file.write('<td>%s</td>' % detail.elapsed_time)
             file.write('<td>%s %s</td>' % (detail.depth, log.depth_unit))
-            file.write('<td>%s %s</td>' % (detail.water_temperature, log.temperature_unit))
+            file.write('<td>%s %s</td>' %
+                       (detail.water_temperature, log.temperature_unit))
             if detail.ascent_rate_violation:
                 arv = '<span class="dl.violation">ARV</span>'
             else:
@@ -98,6 +103,6 @@ def dump(log, file):
         file.write('</div>')
 
         file.write('</div>')
-        
+
     file.write('</body>')
     file.write('</html>')

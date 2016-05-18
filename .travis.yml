@@ -2,9 +2,9 @@ language: python
 python:
   - "3.5"
 before_install:
-    - pip install pytest pytest-cov
+    - pip install pytest pytest-cov pytest-pep8
 script:
-    - py.test
+    - py.test --cov=divelog --pep8 tests/
 branches:
   only:
     - master

@@ -1,6 +1,6 @@
 """
 This module implements a format handler for DAN DL7 files. These are line
-oriented, character separated, and poorly documented. This parser doesn't 
+oriented, character separated, and poorly documented. This parser doesn't
 handle all possible record types at this time.
 """
 from divelog import *
@@ -10,6 +10,7 @@ FORMAT_NAME = 'DL7'
 
 logger = logging.getLogger(__name__)
 
+
 def __parse_file_header(log, line):
     logger.debug('parsing file header metadata')
     log.metadata['source_format'] = 'DL7'
@@ -17,6 +18,7 @@ def __parse_file_header(log, line):
     log.metadata['sending_application'] = line[1]
     log.metadata['message_type'] = line[2]
     log.created = line[3]
+
 
 def __parse_record_header(log, line):
     logger.debug('parsing record header')
@@ -28,6 +30,7 @@ def __parse_record_header(log, line):
     log.temperature_unit = line[5]
     log.tank_pressure_unit = line[6]
     log.tank_volume_unit = line[7]
+
 
 def __parse_dive_header(log, line):
     logger.debug('parsing dive header')
@@ -44,6 +47,7 @@ def __parse_dive_header(log, line):
     dive.O2_mode = line[7]
     dive.rebreather_diluent_gas = line[8]
     dive.altitude = line[9]
+
 
 def __parse_dive_profile(log, line):
     logger.debug('parsing dive profile data')
@@ -66,6 +70,7 @@ def __parse_dive_profile(log, line):
     detail.OUT = line[13]
     detail.ascent_rate = line[14]
 
+
 def __parse_dive_trailer(log, line):
     logger.debug('parsing dive trailer')
     dive = log.dives[len(log.dives)-1]
@@ -76,18 +81,23 @@ def __parse_dive_trailer(log, line):
     dive.min_water_temperature = line[4]
     dive.pressure_drop = line[5]
 
+
 def __parse_dive_profile_start(log, line):
     __parsers[''] = __parse_dive_profile
+
 
 def __parse_dive_profile_end(log, line):
     __parsers[''] = __parse_none
 
+
 def __parse_none(log, line):
     logger.debug('ignoring: %s' % line)
 
-__parsers = { # ZXU - Dive Profile
+
+__parsers = {
+    # ZXU - Dive Profile
     'FSH': __parse_file_header,
-    'ZAR': __parse_none, # application reserved ZAR{...}
+    'ZAR': __parse_none,           # application reserved ZAR{...}
     'ZRH': __parse_record_header,
     'ZAR': __parse_none,
     'ZDH': __parse_dive_header,
@@ -98,6 +108,7 @@ __parsers = { # ZXU - Dive Profile
     '': __parse_none
 }
 
+
 def __parse_line(log, line):
     fields = line.strip().split('|')
     line_type = fields[0]
@@ -105,6 +116,7 @@ def __parse_line(log, line):
         __parsers[line_type](log, fields[1:])
     else:
         logger.warn('invalid input: %s' % line)
+
 
 def parse(file):
     """

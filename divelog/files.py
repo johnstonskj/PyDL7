@@ -12,7 +12,11 @@ Format handlers are modules that implement the following pair of functions:
 These allow for reading and writing files in a specific format.
 """
 import os.path
-import divelog.dl7, divelog.json, divelog.html
+
+import divelog.dl7
+import divelog.json
+import divelog.html
+
 
 formats = {
     divelog.json.FORMAT_NAME: divelog.json,
@@ -24,10 +28,11 @@ extensions = {
     'json': divelog.json.FORMAT_NAME,
     'ztr':  divelog.dl7.FORMAT_NAME,     # PDE Registration
     'zxu':  divelog.dl7.FORMAT_NAME,     # Dive Profile
-    'zxl':  divelog.dl7.FORMAT_NAME,     # Diver Demographics, Dive Profile, Dive Log
+    'zxl':  divelog.dl7.FORMAT_NAME,     # Diver Demographics, Dive Profile/Log
     'zma':  divelog.dl7.FORMAT_NAME,     # Medical Report Add
     'zmu':  divelog.dl7.FORMAT_NAME      # Medical Report Update
 }
+
 
 def get_module(filename):
     """

@@ -7,12 +7,14 @@ import json
 
 FORMAT_NAME = 'JSON'
 
+
 def parse(file):
     """
     Parse this file object and return either a new top-level Log
     object, or None.
     """
     pass
+
 
 def dump(log, file):
     """

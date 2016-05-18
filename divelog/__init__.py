@@ -1,9 +1,9 @@
 """
 This module only contains the classes used to store parsed dive log data. These
 classes may be used directly to create a model and write to a file, or more
-likely they are the result of a parse() function on an input file. 
+likely they are the result of a parse() function on an input file.
 
-The structure of a log in memory consists of a list of dives, each of which 
+The structure of a log in memory consists of a list of dives, each of which
 contains a list of dive details (the dive record). Dive details are recorded
 by a dive computer and represent depth, temperature, and so on.
 
@@ -17,12 +17,16 @@ by a dive computer and represent depth, temperature, and so on.
 
 Note that certain objects contain a dictionary 'metadata' that is not defined
 by this model and typically contains details included in the serialized format
-that may be required when writing it back to a file but doesn't represent 
+that may be required when writing it back to a file but doesn't represent
 details of the dive itself.
 """
-import datetime, logging, re
+import datetime
+import logging
+import re
+
 
 logger = logging.getLogger(__name__)
+
 
 NMRI_PRESSURE_CODE = {
     'ATA': 'atmospheres absolute',
@@ -42,10 +46,12 @@ NMRI_PRESSURE_CODE = {
     'barg': 'Bar gauge pressure'
     }
 
+
 DEPTH_UNITS = {
     'M': 'meters',
     'FT': 'feet'
     }
+
 
 TEMP_UNITS = {
     'F': 'degree Fahrenheit',
@@ -53,10 +59,27 @@ TEMP_UNITS = {
     'K': 'degree Kelvin'
     }
 
+
 VOLUME_UNITS = {
     'L': 'liter',
     'CF': 'cubic feet'
     }
+
+
+__now__ = datetime.datetime.now()
+DEFAULT_NOW = __now__.strftime('%Y%m%d')
+
+
+def value_error(value, name):
+    message = 'invalid value (%s) for property %s, ignoring' % (value, name)
+    logger.warn(message)
+    raise ValueError(message)
+
+
+def attribute_error(obj, name):
+    raise AttributeError('no property named %s on class %s' %
+                         (name, obj.__class__.__name__))
+
 
 class Log(object):
     """
@@ -64,7 +87,7 @@ class Log(object):
     """
     def __init__(self):
         self.metadata = {}
-        self.created = 0
+        self.created = DEFAULT_NOW
         # recorder
         self.computer_model = ''
         self.computer_serial = ''
@@ -80,68 +103,82 @@ class Log(object):
 
     def __setattr__(self, name, value):
         if name == 'created':
-            if value == '':
-                value = 0
-            try:
-                super(Log, self).__setattr__(name, int(value))
-            except TypeError:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        if name == 'depth_unit':
+            parsed = parse_timestamp(value)
+            if parsed is None:
+                value_error(value, name)
+            else:
+                super(Log, self).__setattr__(name, parsed)
+        elif name == 'depth_unit':
             if value in DEPTH_UNITS:
                 super(Log, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        if name in ['depth_pressure_unit', 'altitude_unit', 'tank_pressure_unit']:
+                value_error(value, name)
+        elif name in ['depth_pressure_unit', 'altitude_unit',
+                      'tank_pressure_unit']:
             if value in NMRI_PRESSURE_CODE:
                 super(Log, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        if name == 'temperature_unit':
+                value_error(value, name)
+        elif name == 'temperature_unit':
             if value in TEMP_UNITS:
                 super(Log, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        if name == 'tank_volume_unit':
+                value_error(value, name)
+        elif name == 'tank_volume_unit':
             if value in VOLUME_UNITS:
                 super(Log, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        else:
+                value_error(value, name)
+        elif name in ['metadata', 'computer_model', 'computer_serial',
+                      'dives']:
+            # TODO: should typecheck metadata and dives
             super(Log, self).__setattr__(name, value)
+        else:
+            # Unknown attribute...
+            attribute_error(self, name)
+
 
 def parse_timestamp(ts):
     """
-    Parse a timestamp in the specified DL7 format into a standard Python datetime
-    object. Return a datetime, or None if the input is not valid.
+    Parse a timestamp in the specified DL7 format into a standard Python
+    datetime object. Return a datetime, or None if the input is not valid.
 
-    Stamp: YYYY[MM[DD[HHMM[SS[.S[S[S[S]]]]]]]][+/-ZZZZ] ^ <degree of precision>
+    DL7 timestamp format:
+      YYYY[MM[DD[HHMM[SS[.S[S[S[S]]]]]]]][+/-ZZZZ]^<degree of precision>
     """
-    m = re.match('(?P<Y>\d\d\d\d)(?P<M>\d\d)?(?P<D>\d\d)?(?P<HM>\d\d\d\d)?(?P<S>\d\d)?(?P<MS>\.\d+)?(?P<Z>[\+\-]\d\d\d\d)?(?P<P>\^\d+)?', ts)
-    print(m.groups())
-    year = int(m.group('Y'))
-    month = int((m.group('M') or 0))
-    day = int((m.group('D') or 0))
-    if m.group('HM'):
-        hour = int(m.group('HM')[0:2])
-        minute = int(m.group('HM')[2:])
+    m = re.match('(?P<Y>\d\d\d\d)(?P<M>\d\d)?(?P<D>\d\d)?' +
+                 '(?P<HM>\d\d\d\d)?(?P<S>\d\d)?(?P<MS>\.\d+)?' +
+                 '(?P<Z>[\+\-]\d\d\d\d)?(?P<P>\^\d+)?', ts)
+    if m:
+        year = int(m.group('Y'))
+        month = int((m.group('M') or 0))
+        day = int((m.group('D') or 0))
+        if m.group('HM'):
+            hour = int(m.group('HM')[0:2])
+            minute = int(m.group('HM')[2:])
+        else:
+            hour = minute = 0
+            seconds = int((m.group('S') or 0))
+            if m.group('MS'):
+                millis = int(m.group('MS')[1:]) * 100000
+            else:
+                millis = 0
+                try:
+                    return datetime.datetime(year, month, day, hour,
+                                             minute, seconds, millis)
+                except ValueError:
+                    logger.warn('invalid value (%s) for timestamp' % ts)
+                    raise
     else:
-        hour = minute = 0
-    seconds = int((m.group('S') or 0))
-    if m.group('MS'):
-        millis = int(m.group('MS')[1:]) * 100000
-    else:
-        millis = 0
-    try:
-        return datetime.datetime(year, month, day, hour, minute, seconds, millis)
-    except ValueError:
-        logger.warn('invalid value (%s) for timestamp' % ts)
-        return None
+        raise ValueError('invalid format (%s) for timestamp' % ts)
+
 
 class Diver(object):
     """
     Currently undefined
     """
     pass
+
 
 class Dive(object):
     def __init__(self):
@@ -165,9 +202,8 @@ class Dive(object):
         self.record = []
 
     def __setattr__(self, name, value):
-        if name in ['sequence_number', 
-                    'leave_surface_time', 'reach_surface_time',
-                    'air_temperature', 
+        if name in ['sequence_number',
+                    'air_temperature',
                     'pressure_drop', 'altitude',
                     'number_of_tanks', 'tank_volume',
                     'tank_start_pressure', 'rebreather_diluent_gas']:
@@ -176,31 +212,38 @@ class Dive(object):
             try:
                 super(Dive, self).__setattr__(name, int(value))
             except ValueError:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        # validate leave_surface_time and reach_surface_time as timestamps
-        if name in ['min_water_temperature', 'max_depth']:
+                value_error(value, name)
+        elif name in ['leave_surface_time', 'reach_surface_time']:
+            parsed = parse_timestamp(value)
+            if parsed is None:
+                value_error(value, name)
+            else:
+                super(Dive, self).__setattr__(name, parsed)
+        elif name in ['min_water_temperature', 'max_depth']:
             if value == '':
                 value = 0.0
             try:
                 super(Dive, self).__setattr__(name, float(value))
             except ValueError:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
-        if name == 'recording_interval':
+                value_error(value, name)
+        elif name == 'recording_interval':
             sri = split_recording_interval(value)
             if sri[0]:
                 super(Dive, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
+                value_error(value, name)
         elif name == 'O2_mode':
-            if value in ['PO2', 'FO2', '']: # '' = unknown
+            if value in ['PO2', 'FO2', '']:  # '' = unknown
                 super(Dive, self).__setattr__(name, value)
             else:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
+                value_error(value, name)
         else:
             super(Dive, self).__setattr__(name, value)
+            name_error(self, name)
+
 
 def split_recording_interval(ri):
-    t = '' 
+    t = ''
     i = ''
     u = ''
     if ri[0] in ['Q', 'D']:
@@ -216,13 +259,16 @@ def split_recording_interval(ri):
         logger.warn('invalid value (%s) for recording interval type' % ri)
     return (t, i, u)
 
+
 def format_recording_interval(ri):
     (t, i, u) = split_recording_interval(ri)
-    t = {'Q': 'Every', 'C': 'Continuously', 'V': 'Variable', 'D': 'On Change'}[t]
+    t = {'Q': 'Every', 'C': 'Continuously',
+         'V': 'Variable', 'D': 'On Change'}[t]
     u = {
         'S': 'second', 'M': 'minute',
         'f': 'feet', 'm': 'meter', 'b': 'bar'}[u]
     return ('%s %s %s' % (t, i, u)).strip()
+
 
 class DiveDetail(object):
     def __init__(self):
@@ -254,7 +300,7 @@ class DiveDetail(object):
             try:
                 super(DiveDetail, self).__setattr__(name, int(value))
             except ValueError:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
+                value_error(value, name)
         elif name in ['elapsed_time', 'depth', 'water_temperature',
                       'gas_switch', 'main_cylinder_pressure']:
             if value == '':
@@ -262,7 +308,7 @@ class DiveDetail(object):
             try:
                 super(DiveDetail, self).__setattr__(name, float(value))
             except ValueError:
-                logger.warn('invalid value (%s) for property %s, ignoring' % (value, name))
+                value_error(value, name)
         elif name in ['ascent_rate_violation', 'decompression_violation']:
             if value in ['True', 'T', 1]:
                 super(DiveDetail, self).__setattr__(name, True)
