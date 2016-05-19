@@ -9,7 +9,7 @@ in parenthesis implies not yet implemented:
 ```
 -- divelog     --> the DiveLog classes
    |-- files   --> file formats and extensions
-   |-- dl7     --> read/(write) DAN DL7 files
+   |-- dl7     --> read/write DAN DL7 files
    |-- json    --> (read)/write custom JSON files
    |-- html    --> write simple HTML file
    '-- uddf    --> (read)/(write) UDDF files

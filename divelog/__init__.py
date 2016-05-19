@@ -110,6 +110,10 @@ class Log(object):
                     super(Log, self).__setattr__(name, parsed)
                 except ValueError:
                     value_error(value, name)
+            elif isinstance(value, float):
+                value = datetime.datetime.fromtimestamp(value, 
+                                                        datetime.timezone.utc)
+                super(Log, self).__setattr__(name, value)
             elif isinstance(value, datetime.datetime):
                 super(Log, self).__setattr__(name, value)
             else:
@@ -177,7 +181,8 @@ def parse_timestamp(ts):
             millis = 0
         # This raises ValueError on bad input
         return datetime.datetime(year, month, day, hour,
-                                 minute, seconds, millis)
+                                 minute, seconds, millis,
+                                 tzinfo=datetime.timezone.utc)
     else:
         raise ValueError('invalid format (%s) for timestamp' % ts)
 
@@ -232,6 +237,10 @@ class Dive(object):
                     super(Dive, self).__setattr__(name, parsed)
                 except ValueError:
                     value_error(value, name)
+            elif isinstance(value, float):
+                value = datetime.datetime.fromtimestamp(value, 
+                                                        datetime.timezone.utc)
+                super(Dive, self).__setattr__(name, value)
             elif isinstance(value, datetime.datetime):
                 super(Dive, self).__setattr__(name, value)
             else:
