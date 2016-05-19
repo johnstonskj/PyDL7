@@ -44,5 +44,8 @@ def create_record(iterations):
             depth = depth - 10
         detail.depth = depth
         detail.water_temperature = 26.0
+        if i == iterations-1:
+            detail.ascent_rate_violation = True
+            detail.decompression_violation = True
         record.append(detail)
     return record

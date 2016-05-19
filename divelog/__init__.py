@@ -336,7 +336,7 @@ class DiveDetail(object):
             except ValueError:
                 value_error(value, name)
         elif name in ['ascent_rate_violation', 'decompression_violation']:
-            if value in ['True', 'T', 1]:
+            if value in [True, 'True', 'T', 1]:
                 super(DiveDetail, self).__setattr__(name, True)
             else:
                 super(DiveDetail, self).__setattr__(name, False)

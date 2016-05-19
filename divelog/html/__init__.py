@@ -43,10 +43,6 @@ def __label(file, value, classes=None):
     __node(file, 'label', value, classes)
 
 
-def __span(file, value, classes=None):
-    __node(file, 'span', value, classes)
-
-
 def __labeled(file, label, value):
     __open(file, 'div', 'row')
     __open(file, 'div', 'col-md-2')
@@ -148,11 +144,11 @@ def dump(log, file):
                 classes='table table-striped table-condensed')
         for detail in dive.record:
             if detail.ascent_rate_violation:
-                arv = '<span class="dl.violation">ARV</span>'
+                arv = '<span class="warning">ARV</span>'
             else:
                 arv = ''
             if detail.decompression_violation:
-                dv = '<span class="dl.violation">DV</span>'
+                dv = '<span class="warning">DV</span>'
             else:
                 dv = ''
             __trow(file, [
