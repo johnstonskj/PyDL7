@@ -56,7 +56,8 @@ def main():
         else:
             outmodule.dump(parsed, sys.stdout)
     else:
-        logger.error('could not find file handler for format %s' % 'JSON')
+        logger.error('could not find file handler for format %s' % 
+                     (args.writeformat or 'JSON'))
         sys.exit(2)
 
 if __name__ == '__main__':
