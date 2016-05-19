@@ -37,7 +37,7 @@ def __parse_dive_header(log, line):
     dive = Dive()
     dive.record = []
     log.dives.append(dive)
-    dive.metadata['export_sequence'] = line[0]
+    dive.metadata['export_sequence'] = int(line[0])
     dive.sequence_number = line[1]
     dive.metadata['record_type'] = line[2]
     dive.recording_interval = line[3]
@@ -136,4 +136,4 @@ def dump(log, file):
     """
     Serialize the log to the provided file object.
     """
-    pass
+    raise NotImplementedError()

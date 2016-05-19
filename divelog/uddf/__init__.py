@@ -13,11 +13,11 @@ def parse(file):
     Parse this file object and return either a new top-level Log
     object, or None.
     """
-    pass
+    raise NotImplementedError()
 
 
 def dump(log, file):
     """
     Serialize the log to the provided file object.
     """
-    pass
+    raise NotImplementedError()
