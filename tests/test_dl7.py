@@ -115,3 +115,22 @@ def test_dl7_writer():
     content = file.getvalue()
     assert content.startswith('FSH|^~<>{}|PyDL7|ZXU|')
     # TODO: more tests
+
+
+def test_round_trip():
+    log = examples.create_log()
+    outp = io.StringIO()
+    divelog.dl7.dump(log, outp)
+    content = outp.getvalue()
+    inp = io.StringIO(content)
+    log2 = divelog.dl7.parse(inp)
+    assert log2.created == log.created
+    assert log2.computer_model == log.computer_model
+    assert log2.computer_serial == log.computer_serial
+    assert log2.depth_pressure_unit == log.depth_pressure_unit
+    assert log2.altitude_unit == log.altitude_unit
+    assert log2.temperature_unit == log.temperature_unit
+    assert log2.tank_pressure_unit == log.tank_pressure_unit
+    assert log2.tank_volume_unit == log.tank_volume_unit
+    assert len(log2.dives) == len(log.dives)
+    assert len(log2.dives[0].record) == len(log.dives[0].record)

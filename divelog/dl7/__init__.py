@@ -139,7 +139,7 @@ def dump(log, file):
     file.write('FSH|%s|PyDL7|ZXU|%s|\n' %
                (log.metadata.get('encoding_characters', '^~<>{}'),
                 log.created.strftime('%Y%m%d%H%M%S')))
-    file.write('ZRH|%s|%s|%s|%s|%s|%s|%s|%s|\m' %
+    file.write('ZRH|%s|%s|%s|%s|%s|%s|%s|%s|\n' %
                (log.metadata.get('encoding_characters', '^~<>{}'),
                 log.computer_model,
                 log.computer_serial,
