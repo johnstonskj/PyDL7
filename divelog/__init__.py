@@ -105,11 +105,11 @@ class Log(object):
     def __setattr__(self, name, value):
         if name == 'created':
             if isinstance(value, str):
-                parsed = parse_timestamp(value)
-                if parsed is None:
-                    value_error(value, name)
-                else:
+                try:
+                    parsed = parse_timestamp(value)
                     super(Log, self).__setattr__(name, parsed)
+                except ValueError:
+                    value_error(value, name)
             elif isinstance(value, datetime.datetime):
                 super(Log, self).__setattr__(name, value)
             else:
@@ -175,12 +175,9 @@ def parse_timestamp(ts):
             millis = int(m.group('MS')[1:]) * 100000
         else:
             millis = 0
-        try:
-            return datetime.datetime(year, month, day, hour,
-                                     minute, seconds, millis)
-        except ValueError:
-            logger.warn('invalid value (%s) for timestamp' % ts)
-            raise
+        # This raises ValueError on bad input
+        return datetime.datetime(year, month, day, hour,
+                                 minute, seconds, millis)
     else:
         raise ValueError('invalid format (%s) for timestamp' % ts)
 
@@ -230,11 +227,11 @@ class Dive(object):
                 value_error(value, name)
         elif name in ['leave_surface_time', 'reach_surface_time']:
             if isinstance(value, str):
-                parsed = parse_timestamp(value)
-                if parsed is None:
-                    value_error(value, name)
-                else:
+                try:
+                    parsed = parse_timestamp(value)
                     super(Dive, self).__setattr__(name, parsed)
+                except ValueError:
+                    value_error(value, name)
             elif isinstance(value, datetime.datetime):
                 super(Dive, self).__setattr__(name, value)
             else:
@@ -248,10 +245,10 @@ class Dive(object):
             except ValueError:
                 value_error(value, name)
         elif name == 'recording_interval':
-            sri = split_recording_interval(value)
-            if sri[0]:
+            try:
+                sri = split_recording_interval(value)
                 super(Dive, self).__setattr__(name, value)
-            else:
+            except ValueError:
                 value_error(value, name)
         elif name == 'O2_mode':
             if value in ['PO2', 'FO2', '']:  # '' = unknown
@@ -275,13 +272,19 @@ def split_recording_interval(ri):
         t = ri[0]
         if ri[-1:] in {'Q': ['S', 'M', 'W', 'L'], 'D': ['f', 'm', 'b']}[t]:
             u = ri[-1:]
-            i = ri[1:-1]
+            try:
+                i = int(ri[1:-1])
+            except ValueError:
+                logger.warn('invalid value (%s) for recording interval value' % ri)
+                raise
         else:
             logger.warn('invalid value (%s) for recording interval unit' % ri)
+            raise ValueError()
     elif ri[0] in ['C', 'V']:
         t = ri[0]
     else:
         logger.warn('invalid value (%s) for recording interval type' % ri)
+        raise ValueError()
     return (t, i, u)
 
 
@@ -297,7 +300,7 @@ def format_recording_interval(ri):
 
 class DiveDetail(object):
     def __init__(self):
-        self.elapsed_time = 0
+        self.elapsed_time = 0.0
         # environment
         self.depth = 0.0
         self.current_ceiling = 0.0
