@@ -110,5 +110,8 @@ ZZZ|||
 
 def test_dl7_writer():
     log = examples.create_log()
-    with pytest.raises(NotImplementedError):
-        divelog.dl7.dump(log, None)
+    file = io.StringIO()
+    divelog.dl7.dump(log, file)
+    content = file.getvalue()
+    assert content.startswith('FSH|^~<>{}|PyDL7|ZXU|')
+    # TODO: more tests

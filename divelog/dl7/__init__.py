@@ -136,4 +136,54 @@ def dump(log, file):
     """
     Serialize the log to the provided file object.
     """
-    raise NotImplementedError()
+    file.write('FSH|%s|PyDL7|ZXU|%s|\n' %
+               (log.metadata.get('encoding_characters', '^~<>{}'),
+                log.created.strftime('%Y%m%d%H%M%S')))
+    file.write('ZRH|%s|%s|%s|%s|%s|%s|%s|%s|\m' %
+               (log.metadata.get('encoding_characters', '^~<>{}'),
+                log.computer_model,
+                log.computer_serial,
+                log.depth_pressure_unit,
+                log.altitude_unit,
+                log.temperature_unit,
+                log.tank_pressure_unit,
+                log.tank_volume_unit))
+    for dive in log.dives:
+        file.write('ZDH|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|\n' %
+                   (dive.metadata.get('export_sequence', dive.sequence_number),
+                    dive.sequence_number,
+                    dive.metadata.get('record_type', 'M'),
+                    dive.recording_interval,
+                    dive.leave_surface_time.strftime('%Y%m%d%H%M%S'),
+                    dive.air_temperature,
+                    dive.tank_volume,
+                    dive.O2_mode,
+                    dive.rebreather_diluent_gas,
+                    dive.altitude))
+        if dive.record:
+            file.write('ZDP{\n')
+            for detail in dive.record:
+                file.write('|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|\n' %
+                           (detail.elapsed_time,
+                            detail.depth,
+                            detail.gas_switch,
+                            detail.current_PO2,
+                            str(detail.ascent_rate_violation)[0],
+                            str(detail.decompression_violation)[0],
+                            detail.current_ceiling,
+                            detail.water_temperature,
+                            detail.warning_number,
+                            detail.main_cylinder_pressure,
+                            detail.diluent_cylinder_pressure,
+                            detail.oxygen_flow_rate,
+                            detail.CNS_toxicity,
+                            detail.OUT,
+                            detail.ascent_rate))
+            file.write('ZDP}\n')
+        file.write('ZDT|%s|%s|%s|%s|%s|%s|\n' %
+                   (dive.metadata.get('export_sequence', dive.sequence_number),
+                    dive.sequence_number,
+                    dive.max_depth,
+                    dive.reach_surface_time.strftime('%Y%m%d%H%M%S'),
+                    dive.min_water_temperature,
+                    dive.pressure_drop))
