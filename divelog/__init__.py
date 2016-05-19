@@ -20,6 +20,7 @@ by this model and typically contains details included in the serialized format
 that may be required when writing it back to a file but doesn't represent
 details of the dive itself.
 """
+import collections
 import datetime
 import logging
 import re
@@ -103,11 +104,16 @@ class Log(object):
 
     def __setattr__(self, name, value):
         if name == 'created':
-            parsed = parse_timestamp(value)
-            if parsed is None:
-                value_error(value, name)
+            if isinstance(value, str):
+                parsed = parse_timestamp(value)
+                if parsed is None:
+                    value_error(value, name)
+                else:
+                    super(Log, self).__setattr__(name, parsed)
+            elif isinstance(value, datetime.datetime):
+                super(Log, self).__setattr__(name, value)
             else:
-                super(Log, self).__setattr__(name, parsed)
+                value_error(value, name)
         elif name == 'depth_unit':
             if value in DEPTH_UNITS:
                 super(Log, self).__setattr__(name, value)
@@ -129,14 +135,20 @@ class Log(object):
                 super(Log, self).__setattr__(name, value)
             else:
                 value_error(value, name)
-        elif name in ['metadata', 'computer_model', 'computer_serial',
-                      'dives']:
-            # TODO: should typecheck metadata and dives
+        elif name == 'metadata':
+            if isinstance(value, collections.Mapping):
+                super(Log, self).__setattr__(name, value)
+            else:
+                value_error(value, name)
+        elif name == 'dives':
+            if isinstance(value, collections.Sequence):
+                super(Log, self).__setattr__(name, value)
+            else:
+                value_error(value, name)
+        elif name in ['computer_model', 'computer_serial']:
             super(Log, self).__setattr__(name, value)
         else:
-            # Unknown attribute...
             attribute_error(self, name)
-
 
 def parse_timestamp(ts):
     """
@@ -158,17 +170,17 @@ def parse_timestamp(ts):
             minute = int(m.group('HM')[2:])
         else:
             hour = minute = 0
-            seconds = int((m.group('S') or 0))
-            if m.group('MS'):
-                millis = int(m.group('MS')[1:]) * 100000
-            else:
-                millis = 0
-                try:
-                    return datetime.datetime(year, month, day, hour,
-                                             minute, seconds, millis)
-                except ValueError:
-                    logger.warn('invalid value (%s) for timestamp' % ts)
-                    raise
+        seconds = int((m.group('S') or 0))
+        if m.group('MS'):
+            millis = int(m.group('MS')[1:]) * 100000
+        else:
+            millis = 0
+        try:
+            return datetime.datetime(year, month, day, hour,
+                                     minute, seconds, millis)
+        except ValueError:
+            logger.warn('invalid value (%s) for timestamp' % ts)
+            raise
     else:
         raise ValueError('invalid format (%s) for timestamp' % ts)
 
@@ -186,11 +198,11 @@ class Dive(object):
         self.sequence_number = 0
         self.recording_interval = 'V'
         # environment
-        self.leave_surface_time = 0
-        self.reach_surface_time = 0
-        self.air_temperature = 0
-        self.min_water_temperature = 0
-        self.max_depth = 0
+        self.leave_surface_time = DEFAULT_NOW
+        self.reach_surface_time = DEFAULT_NOW
+        self.air_temperature = 0.0
+        self.min_water_temperature = 0.0
+        self.max_depth = 0.0
         self.pressure_drop = 0
         self.altitude = 0
         # equipment
@@ -202,11 +214,14 @@ class Dive(object):
         self.record = []
 
     def __setattr__(self, name, value):
-        if name in ['sequence_number',
-                    'air_temperature',
-                    'pressure_drop', 'altitude',
-                    'number_of_tanks', 'tank_volume',
-                    'tank_start_pressure', 'rebreather_diluent_gas']:
+        if name == 'metadata':
+            if isinstance(value, collections.Mapping):
+                super(Dive, self).__setattr__(name, value)
+            else:
+                value_error(value, name)
+        elif name in ['sequence_number', 'pressure_drop',
+                      'number_of_tanks', 'tank_volume',
+                      'tank_start_pressure', 'rebreather_diluent_gas']:
             if value == '':
                 value = 0
             try:
@@ -214,12 +229,18 @@ class Dive(object):
             except ValueError:
                 value_error(value, name)
         elif name in ['leave_surface_time', 'reach_surface_time']:
-            parsed = parse_timestamp(value)
-            if parsed is None:
-                value_error(value, name)
+            if isinstance(value, str):
+                parsed = parse_timestamp(value)
+                if parsed is None:
+                    value_error(value, name)
+                else:
+                    super(Dive, self).__setattr__(name, parsed)
+            elif isinstance(value, datetime.datetime):
+                super(Dive, self).__setattr__(name, value)
             else:
-                super(Dive, self).__setattr__(name, parsed)
-        elif name in ['min_water_temperature', 'max_depth']:
+                value_error(value, name)
+        elif name in ['air_temperature', 'altitude',
+                      'min_water_temperature', 'max_depth']:
             if value == '':
                 value = 0.0
             try:
@@ -237,9 +258,13 @@ class Dive(object):
                 super(Dive, self).__setattr__(name, value)
             else:
                 value_error(value, name)
+        elif name == 'record':
+            if isinstance(value, collections.Sequence):
+                super(Dive, self).__setattr__(name, value)
+            else:
+                value_error(value, name)
         else:
-            super(Dive, self).__setattr__(name, value)
-            name_error(self, name)
+            attribute_error(self, name)
 
 
 def split_recording_interval(ri):
@@ -274,9 +299,9 @@ class DiveDetail(object):
     def __init__(self):
         self.elapsed_time = 0
         # environment
-        self.depth = 0
-        self.current_ceiling = 0
-        self.water_temperature = 0
+        self.depth = 0.0
+        self.current_ceiling = 0.0
+        self.water_temperature = 0.0
         self.ascent_rate = 0
         # equipment
         self.gas_switch = 0
@@ -292,7 +317,7 @@ class DiveDetail(object):
         self.decompression_violation = False
 
     def __setattr__(self, name, value):
-        if name in ['curent_ceiling', 'ascent_rate', 'current_PO2',
+        if name in ['ascent_rate', 'current_PO2',
                     'diluent_cylinder_pressure', 'oxygen_flow_rate',
                     'CNS_toxicity', 'OUT', 'warning_number']:
             if value == '':
@@ -301,8 +326,9 @@ class DiveDetail(object):
                 super(DiveDetail, self).__setattr__(name, int(value))
             except ValueError:
                 value_error(value, name)
-        elif name in ['elapsed_time', 'depth', 'water_temperature',
-                      'gas_switch', 'main_cylinder_pressure']:
+        elif name in ['current_ceiling', 'elapsed_time', 'depth', 
+                      'water_temperature', 'gas_switch', 
+                      'main_cylinder_pressure']:
             if value == '':
                 value = 0.0
             try:
@@ -315,4 +341,4 @@ class DiveDetail(object):
             else:
                 super(DiveDetail, self).__setattr__(name, False)
         else:
-            super(DiveDetail, self).__setattr__(name, value)
+            attribute_error(self, name)

@@ -4,7 +4,7 @@ python:
 before_install:
     - pip install pytest pytest-cov pytest-pep8
 script:
-    - py.test --cov=divelog --pep8 tests/
+    - python setup.py test
 branches:
   only:
     - master
