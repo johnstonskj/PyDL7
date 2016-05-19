@@ -26,6 +26,7 @@ setup(
     tests_require=[
           'pytest',
           'pytest-cov',
+          'pytest-catchlog',
           'pytest-pep8'
       ],
     entry_points={

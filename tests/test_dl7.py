@@ -98,6 +98,16 @@ ZDT|1|1|15.00|20160320121005|9.4||
     assert detail.main_cylinder_pressure == 0
 
 
+def test_dl7_parser_bad_line(caplog):
+    file = io.StringIO("""
+ZZZ|||
+""")
+    log = divelog.dl7.parse(file)
+    for record in caplog.records:
+        if record.levelname == 'WARN':
+            assert record.message == 'invalid input: ZZZ|||'
+
+
 def test_dl7_writer():
     log = examples.create_log()
     with pytest.raises(NotImplementedError):
