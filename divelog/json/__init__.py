@@ -23,7 +23,7 @@ def dump(log, file):
     """
     def to_dict(obj):
         if isinstance(obj, datetime.datetime):
-            return obj.timestamp()
+            return obj.replace(tzinfo=datetime.timezone.utc).timestamp()
         else:
             d = obj.__dict__
             if 'metadata' in d:
